@@ -18,6 +18,14 @@ def detect_date_column(df):
 
 
 def detect_target_column(df, date_col):
+    preferred = [
+        "quantity", "qty", "units", "units_sold",
+        "sales", "demand", "amount", "volume",
+    ]
+    for c in preferred:
+        if c in df.columns and c != date_col:
+            return c
+
     numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
     numeric_cols = [c for c in numeric_cols if c != date_col]
 
@@ -28,15 +36,6 @@ def detect_target_column(df, date_col):
 
 
 def train_model(csv_path, model_path="demand_model.pkl"):
-    """
-    FIX 1: model_path is now a parameter (absolute path passed from app.py)
-           instead of a hardcoded relative "demand_model.pkl".
-
-    FIX 2: trained only on "month" (single feature), to match the
-           /forecast endpoint which only supplies model.predict([[month]]).
-           Training on month/day/weekday but predicting with only month
-           caused a feature-count mismatch error before.
-    """
     df = pd.read_csv(csv_path)
 
     df.columns = (

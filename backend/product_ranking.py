@@ -2,10 +2,7 @@ import os
 import pandas as pd
 import time
 
-
-# =========================
 # DATA LOADING
-# =========================
 def _load_normalized(csv_path: str) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
     df.columns = (
@@ -17,9 +14,7 @@ def _load_normalized(csv_path: str) -> pd.DataFrame:
     return df
 
 
-# =========================
 # COLUMN DETECTION HELPERS
-# =========================
 def detect_product_column(df: pd.DataFrame) -> str | None:
     candidates = [
         "product_name", "product", "item", "item_name",
@@ -68,9 +63,7 @@ def detect_date_column(df: pd.DataFrame) -> str | None:
     return None
 
 
-# =========================
 # CORE ANALYTICS
-# =========================
 def top_products(csv_path: str, n: int = 3) -> list[dict]:
     if not os.path.exists(csv_path):
         return []
@@ -157,9 +150,7 @@ def get_inventory_data(csv_path: str) -> list[dict]:
         return []
 
 
-# =========================
 # TREND ANALYTICS
-# =========================
 def get_demand_trend(csv_path: str, months: int = 6) -> list[dict]:
     """Monthly demand totals for last N months."""
     if not os.path.exists(csv_path):
@@ -229,9 +220,8 @@ def get_category_distribution(csv_path: str, top_n: int = 3) -> list[dict]:
         return []
 
 
-# =========================
+
 # TIME HELPERS
-# =========================
 def _time_ago(timestamp: float) -> str:
     diff = time.time() - timestamp
 

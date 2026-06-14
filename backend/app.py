@@ -25,16 +25,16 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "https://your-frontend.onrender.com",
-    "http://localhost:5500",
-    "",
-],
+        "https://your-frontend.onrender.com",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ── Absolute paths (relative to this file, NOT the process's cwd) ─────────────
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "demand_model.pkl")
 DATASET_DIR = os.path.join(BASE_DIR, "dataset")
@@ -42,8 +42,6 @@ SALES_DATA_PATH = os.path.join(DATASET_DIR, "sales_data.csv")
 
 os.makedirs(DATASET_DIR, exist_ok=True)
 
-# FIX: don't crash on startup if the model isn't trained yet.
-# /forecast will return a clear 503 until a dataset is uploaded.
 model = None
 if os.path.exists(MODEL_PATH):
     try:
@@ -52,16 +50,10 @@ if os.path.exists(MODEL_PATH):
         print(f"Warning: failed to load existing model: {e}")
         model = None
 
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 STATIC_DIR = os.path.join(PROJECT_ROOT, "frontend")
 
-if os.path.exists(STATIC_DIR):
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
-# ── Routes ──────────────────────────────────────────────────────────────────
 @app.get("/api")
 def home():
     return {"status": "API Running"}
@@ -93,8 +85,6 @@ def forecast(
         )
 
     try:
-        # FIX: model is now trained on a single "month" feature,
-        # matching this single-feature input.
         prediction = model.predict([[month]])
         predicted_demand = round(float(prediction[0]), 2)
         decision = generate_decision(predicted_demand)
@@ -143,24 +133,24 @@ async def upload_dataset(file: UploadFile = File(...)):
     global model
 
     try:
-        #Validate file type
+        # Validate file type
         if not file.filename.endswith(".csv"):
             raise HTTPException(status_code=400, detail="Only CSV files allowed")
 
-        #Save file
+        # Save file
         with open(SALES_DATA_PATH, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        #Validate CSV BEFORE training
+        # Validate CSV BEFORE training
         df = pd.read_csv(SALES_DATA_PATH)
 
         if df.empty:
             raise HTTPException(status_code=400, detail="Uploaded CSV is empty")
 
-        #Retrain model
+        # Retrain model
         score = train_model(SALES_DATA_PATH, MODEL_PATH)
 
-        #Reload model safely
+        # Reload model safely
         model = joblib.load(MODEL_PATH)
 
         return {
@@ -171,5 +161,12 @@ async def upload_dataset(file: UploadFile = File(...)):
             "preview": df.head(5).to_dict(orient="records"),
         }
 
+    except HTTPException:
+        # Don't let our own 400s get swallowed and re-wrapped as 500s
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+if os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")

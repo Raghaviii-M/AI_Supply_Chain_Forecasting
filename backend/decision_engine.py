@@ -2,14 +2,10 @@ def generate_decision(predicted_demand: float) -> dict:
     """
     Generate a supply chain decision based on predicted demand.
 
-    FIX: Previously returned only a plain string.
-    Now returns a structured dict with:
+    Returns a structured dict with:
       - action  : short label
       - reason  : human-readable explanation
       - level   : severity tag (high / moderate / low)
-
-    This makes the response much more useful for the frontend
-    and for any downstream logic.
     """
 
     if predicted_demand > 150:
