@@ -3,6 +3,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 COPY backend /app/backend
+COPY frontend /app/frontend
 COPY backend/requirements.txt /app/requirements.txt
 
 RUN pip install --upgrade pip
