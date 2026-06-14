@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+import io
 import joblib
 import os
 import shutil
@@ -16,6 +18,7 @@ from product_ranking import (
     get_recent_activities,
 )
 from train_model import train_model
+from reports import REPORTS, df_to_excel_bytes, df_to_pdf_bytes
 
 app = FastAPI(
     title="AI Supply Chain Forecasting API",
@@ -34,13 +37,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "demand_model.pkl")
 DATASET_DIR = os.path.join(BASE_DIR, "dataset")
 SALES_DATA_PATH = os.path.join(DATASET_DIR, "sales_data.csv")
 
 os.makedirs(DATASET_DIR, exist_ok=True)
+
 
 model = None
 if os.path.exists(MODEL_PATH):
@@ -52,6 +55,7 @@ if os.path.exists(MODEL_PATH):
 
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 STATIC_DIR = os.path.join(PROJECT_ROOT, "frontend")
+
 
 
 @app.get("/api")
@@ -166,6 +170,42 @@ async def upload_dataset(file: UploadFile = File(...)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Reports & Analytics: real Excel/PDF generation from uploaded data ───────
+@app.get("/api/reports/{report_key}/{file_format}")
+def download_report(report_key: str, file_format: str):
+    if report_key not in REPORTS:
+        raise HTTPException(status_code=404, detail=f"Unknown report type: {report_key}")
+
+    if file_format not in ("excel", "pdf"):
+        raise HTTPException(status_code=404, detail=f"Unknown format: {file_format}")
+
+    report = REPORTS[report_key]
+    title = report["title"]
+    description = report["description"]
+
+    try:
+        df = report["builder"](SALES_DATA_PATH)
+
+        if file_format == "excel":
+            data = df_to_excel_bytes(df, sheet_name=title)
+            media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ext = "xlsx"
+        else:
+            data = df_to_pdf_bytes(title, description, df)
+            media_type = "application/pdf"
+            ext = "pdf"
+
+        filename = f"{title.replace(' ', '_')}.{ext}"
+        return StreamingResponse(
+            io.BytesIO(data),
+            media_type=media_type,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Report generation error: {str(e)}")
 
 
 if os.path.exists(STATIC_DIR):
