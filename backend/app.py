@@ -55,13 +55,14 @@ if os.path.exists(MODEL_PATH):
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "frontend")
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+STATIC_DIR = os.path.join(PROJECT_ROOT, "frontend")
 
 if os.path.exists(STATIC_DIR):
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
 # ── Routes ──────────────────────────────────────────────────────────────────
-@app.get("/")
+@app.get("/api")
 def home():
     return {"status": "API Running"}
 
