@@ -57,6 +57,8 @@ if os.path.exists(MODEL_PATH):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 STATIC_DIR = os.path.join(PROJECT_ROOT, "frontend")
+print("STATIC_DIR =", STATIC_DIR)
+print("EXISTS =", os.path.exists(STATIC_DIR))
 
 if os.path.exists(STATIC_DIR):
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
