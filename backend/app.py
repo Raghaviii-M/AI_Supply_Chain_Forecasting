@@ -55,9 +55,9 @@ if os.path.exists(MODEL_PATH):
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
+STATIC_DIR = os.path.join(BASE_DIR, "frontend")
 
-#app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
 # ── Routes ──────────────────────────────────────────────────────────────────
 @app.get("/")
