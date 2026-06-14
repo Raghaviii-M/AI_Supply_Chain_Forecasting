@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChainSight AI | Inventory Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="shared.js"></script>
+</head>
+<body class="font-sans">
+<script>
+(async () => {
+  let items = [
+    { product_name:"Product A", current_stock:500,  predicted_demand:1250, recommended_stock:1300, status:"Reorder" },
+    { product_name:"Product B", current_stock:300,  predicted_demand:1120, recommended_stock:1200, status:"Reorder" },
+    { product_name:"Product C", current_stock:400,  predicted_demand:980,  recommended_stock:1000, status:"Reorder" },
+    { product_name:"Product D", current_stock:800,  predicted_demand:450,  recommended_stock:500,  status:"Sufficient" },
+    { product_name:"Product E", current_stock:600,  predicted_demand:300,  recommended_stock:400,  status:"Sufficient" },
+  ];
+  try {
+    const r = await fetch(`${API}/api/inventory`);
+    if (r.ok) { const d = await r.json(); items = d.inventory; }
+  } catch {}
+
+  /* FIX: compute risk score dynamically from reorder ratio */
+  const reorderCount = items.filter(i => i.status === "Reorder").length;
+  const riskScore    = Math.round((reorderCount / items.length) * 100);
+
+  const rows = items.map(item => {
+    const badge = item.status === "Reorder"
+      ? `<span class="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">⚠️ Reorder</span>`
+      : `<span class="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">✅ Sufficient</span>`;
+    return `
+      <tr class="border-b border-gray-50 table-row">
+        <td class="px-4 py-3 text-sm font-medium text-gray-800">${item.product_name}</td>
+        <td class="px-4 py-3 text-sm text-gray-600 text-right">${Number(item.current_stock).toLocaleString()}</td>
+        <td class="px-4 py-3 text-sm text-gray-600 text-right">${Number(item.predicted_demand).toLocaleString()}</td>
+        <td class="px-4 py-3 text-sm text-gray-600 text-right">${Number(item.recommended_stock).toLocaleString()}</td>
+        <td class="px-4 py-3 text-center">${badge}</td>
+      </tr>`;
+  }).join("");
+
+  const content = `
+<div class="space-y-6">
+
+  <div class="bg-gradient-to-r from-indigo-700 via-blue-700 to-cyan-600 rounded-3xl p-8 text-white shadow-xl">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">Inventory Intelligence Center</h1>
+        <p class="text-blue-100">AI-powered inventory planning and stock optimization based on future demand forecasts.</p>
+      </div>
+      <div class="text-7xl float">📦</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+    ${statCard("📦","Products Tracked",   items.length,                                  "blue")}
+    ${statCard("⚠️","Reorder Alerts",     reorderCount,                                  "orange")}
+    ${statCard("✅","Healthy Inventory",  items.filter(i=>i.status==="Sufficient").length,"green")}
+    ${statCard("🤖","AI Confidence",      92,                                             "purple")}
+  </div>
+
+  <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+    <div class="flex items-center gap-4">
+      <div class="text-5xl">🧠</div>
+      <div>
+        <h2 class="text-xl font-bold text-gray-800">AI Inventory Decision</h2>
+        <p class="text-gray-600 mt-1">
+          Based on demand forecasting and current inventory, the system recommends
+          increasing stock levels for high-demand products to avoid stockouts.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="p-6 border-b border-gray-100">
+      <h2 class="text-xl font-bold text-gray-800">Inventory Optimization Table</h2>
+      <p class="text-sm text-gray-500 mt-1">AI-generated stock recommendations</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+          <tr>
+            <th class="px-5 py-4 text-left">Product</th>
+            <th class="px-5 py-4 text-right">Current Stock</th>
+            <th class="px-5 py-4 text-right">Predicted Demand</th>
+            <th class="px-5 py-4 text-right">Recommended Stock</th>
+            <th class="px-5 py-4 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-3 mb-4"><span class="text-3xl">📈</span><h2 class="font-bold text-gray-800">Inventory Insights</h2></div>
+      <ul class="space-y-3 text-sm text-gray-600">
+        <li>📦 Products A, B and C are expected to exceed current stock.</li>
+        <li>⚠️ Immediate replenishment is recommended.</li>
+        <li>📊 Forecast demand increased by 18%.</li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-3 mb-4"><span class="text-3xl">🤖</span><h2 class="font-bold text-gray-800">AI Recommendation</h2></div>
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
+        <p class="text-blue-700">Increase inventory by 10–15% for high-demand products and maintain safety stock to reduce stockout risk.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIX: dynamic risk score -->
+  <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="font-bold text-gray-800">Stockout Risk Assessment</h2>
+      <span class="text-2xl">⚠️</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-5 overflow-hidden">
+      <div class="risk-bar bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 h-5 rounded-full"
+           style="width:${riskScore}%"></div>
+    </div>
+    <p class="text-sm text-gray-500 mt-3">AI Risk Score: ${riskScore} / 100</p>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <a href="top_product.html" class="text-center border border-blue-700 text-blue-700 py-3 rounded-xl hover:bg-blue-50">← Product Rankings</a>
+    <a href="reports.html"      class="text-center bg-blue-700 text-white py-3 rounded-xl hover:bg-blue-800">Generate Report →</a>
+  </div>
+
+</div>`;
+
+  renderLayout("inventory", "Inventory Recommendation", content);
+})();
+</script>
+</body>
+</html>

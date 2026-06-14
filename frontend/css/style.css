@@ -1,0 +1,140 @@
+/* ============================================================
+   ChainSight AI — style.css
+   ============================================================ */
+
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+}
+
+html { scroll-behavior: smooth; }
+
+body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #e5e7eb; }
+::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 20px; }
+
+/* ── Cards ── */
+.card-hover { transition: all .3s cubic-bezier(.4,0,.2,1); }
+.card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(0,0,0,.10); }
+
+.kpi-card { transition: all .3s cubic-bezier(.4,0,.2,1); }
+.kpi-card:hover { transform: translateY(-5px); }
+
+/* ── Animations ── */
+.fade-in  { animation: fadeIn  .6s ease both; }
+.slide-up { animation: slideUp .7s ease both; }
+.float    { animation: float 4s ease-in-out infinite; }
+.pulse-soft { animation: pulseSoft 2s ease-in-out infinite; }
+
+/* stagger children */
+.stagger > * { animation: slideUp .6s ease both; }
+.stagger > *:nth-child(1) { animation-delay: .05s; }
+.stagger > *:nth-child(2) { animation-delay: .10s; }
+.stagger > *:nth-child(3) { animation-delay: .15s; }
+.stagger > *:nth-child(4) { animation-delay: .20s; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes float {
+  0%,100% { transform: translateY(0px);   }
+  50%      { transform: translateY(-12px); }
+}
+
+@keyframes pulseSoft {
+  0%   { box-shadow: 0 0 0 0   rgba(37,99,235,.45); }
+  70%  { box-shadow: 0 0 0 14px rgba(37,99,235,0);  }
+  100% { box-shadow: 0 0 0 0   rgba(37,99,235,0);   }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.05); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Glass effect ── */
+.glass {
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,.35);
+}
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(90deg, #2563eb, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Hero / page-level background ── */
+.hero-bg {
+  background: linear-gradient(135deg, #0f172a, #1e3a8a, #2563eb);
+}
+
+/* ── Table rows ── */
+.table-row { transition: background .15s; }
+.table-row:hover { background: #f1f5f9; }
+
+/* ── Buttons ── */
+.btn-primary { background: #2563eb; color: #fff; transition: .25s; }
+.btn-primary:hover { background: #1d4ed8; }
+
+/* ── Shimmer loading skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+/* ── Risk bar ── */
+.risk-bar { transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+
+/* ── Dropzone active ── */
+.dropzone-active {
+  border-color: #2563eb !important;
+  background: linear-gradient(135deg, #eff6ff, #ecfeff) !important;
+  transform: scale(1.01);
+}
+
+/* ── Chart canvas ── */
+canvas { max-width: 100%; }
+
+/* ── Notification badge ── */
+.badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  font-size: 10px; font-weight: 700;
+}
+
+/* ── Reduce motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  main { padding: 12px; }
+}

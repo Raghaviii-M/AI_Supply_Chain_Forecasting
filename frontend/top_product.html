@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChainSight AI | Top Products</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body class="font-sans">
+<script src="shared.js"></script>
+<script>
+(async () => {
+  /* FIX: correct endpoint is /top-products (no /api/ prefix) */
+  let top3 = [
+    { product_name: "Laptop",      total_quantity: 410 },
+    { product_name: "Smart Watch", total_quantity: 390 },
+    { product_name: "Headphones",  total_quantity: 330 },
+  ];
+  try {
+    const r = await fetch(`${API}/top-products`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d.top_products?.length) top3 = d.top_products;
+    }
+  } catch {}
+
+  const medals    = ["🥇","🥈","🥉"];
+  const bgColors  = ["bg-yellow-50 border-yellow-200","bg-gray-50 border-gray-200","bg-orange-50 border-orange-200"];
+  const txtColors = ["text-yellow-700","text-gray-600","text-orange-600"];
+  const badgeColors = ["bg-yellow-100 text-yellow-700","bg-gray-200 text-gray-600","bg-orange-100 text-orange-700"];
+
+  const podiumCards = top3.map((p, i) => `
+    <div class="${bgColors[i]} border rounded-2xl p-6 shadow-sm card-hover
+                flex flex-col items-center text-center gap-3 slide-up"
+         style="animation-delay:${i * 0.1}s">
+      <div class="text-6xl float" style="animation-delay:${i * 0.4}s">${medals[i] || "🏅"}</div>
+      <span class="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ${badgeColors[i]}">
+        Rank #${i + 1}
+      </span>
+      <h3 class="font-extrabold text-gray-800 text-lg">${p.product_name}</h3>
+      <div class="text-4xl font-extrabold ${txtColors[i]}">
+        ${Number(p.total_quantity ?? p.predicted_demand ?? 0).toLocaleString()}
+      </div>
+      <div class="text-xs text-gray-400">Total Units Sold</div>
+      <div class="text-xs text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
+        AI Forecast Analysis
+      </div>
+    </div>`).join("");
+
+  /* Bar chart data */
+  const chartLabels = top3.map(p => p.product_name);
+  const chartData   = top3.map(p => p.total_quantity ?? p.predicted_demand ?? 0);
+  const chartColors = ["#f59e0b","#6b7280","#f97316"];
+
+  const content = `
+<div class="space-y-6">
+
+  <!-- Hero -->
+  <div class="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 rounded-3xl p-8 text-white shadow-xl">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+      <div>
+        <p class="text-yellow-100 text-xs font-semibold uppercase tracking-widest mb-1">Product Intelligence</p>
+        <h1 class="text-3xl font-extrabold mb-2">AI Product Ranking</h1>
+        <p class="text-orange-100 text-sm">
+          Top-performing products identified from sales data using AI demand forecasting.
+        </p>
+      </div>
+      <div class="text-7xl float">🏆</div>
+    </div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 card-hover">
+      <div class="text-3xl mb-3">📈</div>
+      <h3 class="font-bold text-gray-800">Demand Growth</h3>
+      <div class="text-3xl font-extrabold text-green-600 mt-2">+18%</div>
+      <p class="text-xs text-gray-400 mt-1">vs last quarter</p>
+    </div>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 card-hover">
+      <div class="text-3xl mb-3">📦</div>
+      <h3 class="font-bold text-gray-800">Inventory Health</h3>
+      <div class="text-3xl font-extrabold text-blue-600 mt-2">94%</div>
+      <p class="text-xs text-gray-400 mt-1">stock availability</p>
+    </div>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 card-hover">
+      <div class="text-3xl mb-3">🤖</div>
+      <h3 class="font-bold text-gray-800">AI Confidence</h3>
+      <div class="text-3xl font-extrabold text-purple-600 mt-2">92%</div>
+      <p class="text-xs text-gray-400 mt-1">forecast accuracy</p>
+    </div>
+  </div>
+
+  <!-- Podium cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    ${podiumCards}
+  </div>
+
+  <!-- Bar Chart -->
+  <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+    <h2 class="font-bold text-gray-800 mb-5">📊 Demand Comparison Chart</h2>
+    <canvas id="barChart" height="100"></canvas>
+  </div>
+
+  <!-- Insights -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3 mb-4"><span class="text-3xl">🧠</span><h2 class="font-bold text-gray-800">AI Insights</h2></div>
+      <ul class="space-y-3 text-sm text-gray-600">
+        <li class="flex gap-2"><span>✅</span>${top3[0]?.product_name || "Product A"} shows the strongest growth potential.</li>
+        <li class="flex gap-2"><span>📈</span>${top3[1]?.product_name || "Product B"} demand remains consistently high.</li>
+        <li class="flex gap-2"><span>⚠️</span>${top3[2]?.product_name || "Product C"} requires close inventory monitoring.</li>
+      </ul>
+    </div>
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3 mb-4"><span class="text-3xl">📦</span><h2 class="font-bold text-gray-800">Inventory Recommendation</h2></div>
+      <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+        <p class="text-blue-700 text-sm leading-relaxed">
+          Increase stock levels for top-ranked products by 10–15% to prevent shortages during peak demand periods.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav buttons -->
+  <div class="flex flex-col md:flex-row gap-4">
+    <a href="predict.html"   class="flex-1 text-center border-2 border-blue-700 text-blue-700 py-3 rounded-xl font-semibold hover:bg-blue-50 transition">← Run New Forecast</a>
+    <a href="inventory.html" class="flex-1 text-center bg-blue-700 text-white py-3 rounded-xl font-semibold hover:bg-blue-800 transition">Inventory Intelligence →</a>
+  </div>
+
+</div>`;
+
+  renderLayout("top", "Top 3 High-Demand Products", content);
+
+  /* Bar chart */
+  new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+      labels: chartLabels,
+      datasets: [{
+        label: "Total Units",
+        data:  chartData,
+        backgroundColor: chartColors,
+        borderRadius: 10,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 900, easing: "easeOutQuart" },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()} units` } },
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: "#f3f4f6" }, beginAtZero: true },
+      },
+    },
+  });
+})();
+</script>
+</body>
+</html>

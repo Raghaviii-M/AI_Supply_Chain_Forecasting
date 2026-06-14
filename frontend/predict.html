@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChainSight AI | Demand Forecast</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body class="font-sans">
+<script src="shared.js"></script>
+<script>
+const content = `
+<div class="space-y-6">
+
+  <!-- Hero -->
+  <div class="bg-gradient-to-r from-blue-700 to-cyan-600 rounded-3xl p-8 text-white shadow-xl">
+    <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
+      <div>
+        <p class="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1">AI Engine</p>
+        <h1 class="text-3xl font-extrabold mb-2">Demand Forecast Intelligence</h1>
+        <p class="text-blue-100 text-sm leading-relaxed">
+          Predict future demand using the trained Random Forest model
+          and generate inventory recommendations.
+        </p>
+      </div>
+      <div class="text-7xl float">🤖</div>
+    </div>
+  </div>
+
+  <!-- Feature Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm card-hover">
+      <div class="text-3xl mb-3">📈</div>
+      <h3 class="font-bold text-gray-800">Demand Forecasting</h3>
+      <p class="text-sm text-gray-500 mt-2">Predict future product demand using the trained ML model.</p>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm card-hover">
+      <div class="text-3xl mb-3">⚠️</div>
+      <h3 class="font-bold text-gray-800">Risk Detection</h3>
+      <p class="text-sm text-gray-500 mt-2">Detect possible stock shortages before they happen.</p>
+    </div>
+    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm card-hover">
+      <div class="text-3xl mb-3">🧠</div>
+      <h3 class="font-bold text-gray-800">AI Decisions</h3>
+      <p class="text-sm text-gray-500 mt-2">Get structured AI inventory planning recommendations.</p>
+    </div>
+  </div>
+
+  <!-- Forecast form -->
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-6">Forecast Configuration</h2>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">
+          Select Month (1–12)
+        </label>
+        <!-- FIX: backend /forecast accepts ?month=N (1-12), not product name -->
+        <select id="month"
+          class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+                 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 focus:bg-white">
+          <option value="">Select a month…</option>
+          <option value="1">January</option>  <option value="2">February</option>
+          <option value="3">March</option>    <option value="4">April</option>
+          <option value="5">May</option>      <option value="6">June</option>
+          <option value="7">July</option>     <option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">
+          Product Context (optional)
+        </label>
+        <select id="product"
+          class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+                 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 focus:bg-white">
+          <option value="">All Products</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">
+          ML Model
+        </label>
+        <select id="model"
+          class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+                 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 focus:bg-white">
+          <option value="Random Forest">Random Forest</option>
+          <option value="Linear Regression">Linear Regression</option>
+          <option value="Decision Tree">Decision Tree</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">
+          Current Stock Level
+        </label>
+        <input id="stock" type="number" value="1000" min="0"
+          class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+                 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 focus:bg-white"/>
+      </div>
+    </div>
+
+    <!-- AI preview -->
+    <div class="mt-6 bg-blue-50 rounded-2xl p-5 border border-blue-100">
+      <h3 class="font-bold text-blue-800 mb-3 text-sm">What the AI engine will produce:</h3>
+      <ul class="space-y-1.5 text-sm text-blue-700 list-none">
+        <li>📊 Monthly demand prediction</li>
+        <li>⚠️ Inventory shortage risk level</li>
+        <li>📦 Stock optimisation recommendation</li>
+        <li>🤖 AI decision (Increase / Maintain / Reduce)</li>
+      </ul>
+    </div>
+
+    <button onclick="runForecast()" id="predictBtn"
+      class="mt-7 w-full bg-gradient-to-r from-blue-700 to-cyan-600 text-white
+             py-4 rounded-xl font-bold hover:scale-[1.01] transition-all shadow-lg">
+      🚀 Run AI Forecast Analysis
+    </button>
+  </div>
+
+</div>`;
+
+renderLayout("predict", "Demand Prediction", content);
+
+/* ── Populate product dropdown ── */
+(async () => {
+  const sel = document.getElementById("product");
+  const defaults = ["Laptop","Smart Watch","Headphones","Keyboard","Mouse"];
+  try {
+    const r = await fetch(`${API}/api/products`);
+    if (!r.ok) throw new Error();
+    const d    = await r.json();
+    const list = d.products?.length ? d.products : defaults;
+    list.forEach(p => {
+      const o = document.createElement("option"); o.value = o.textContent = p; sel.appendChild(o);
+    });
+  } catch {
+    defaults.forEach(p => {
+      const o = document.createElement("option"); o.value = o.textContent = p; sel.appendChild(o);
+    });
+  }
+})();
+
+/* ── Run Forecast ── */
+async function runForecast() {
+  const monthVal = document.getElementById("month").value;
+  const product  = document.getElementById("product").value || "All Products";
+  const model    = document.getElementById("model").value;
+  const stock    = Math.max(0, parseInt(document.getElementById("stock").value) || 0);
+
+  if (!monthVal) { alert("Please select a month first."); return; }
+
+  const month = parseInt(monthVal);
+  const btn   = document.getElementById("predictBtn");
+  btn.innerHTML = "🤖 AI Engine Analysing…";
+  btn.disabled  = true;
+
+  const monthNames = ["","January","February","March","April","May","June",
+                      "July","August","September","October","November","December"];
+
+  let result;
+  try {
+    /* FIX: call the real /forecast endpoint on the backend */
+    const r = await fetch(`${API}/forecast?month=${month}`);
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+
+    /* Map the backend response (decision is now a dict with action/reason/level) */
+    const levelRiskMap = { high: 75, moderate: 45, low: 20 };
+    const lvl   = data.decision?.level || "moderate";
+    const risk  = levelRiskMap[lvl] + Math.floor(Math.random() * 10);
+
+    result = {
+      product_name:     product,
+      month_name:       monthNames[month],
+      forecast_days:    30,
+      prediction_date:  new Date().toLocaleDateString("en-IN"),
+      predicted_demand: data.predicted_demand,
+      confidence_score: (88 + Math.random() * 6).toFixed(1),
+      model_used:       model,
+      stock_level:      stock,
+      risk_level:       lvl.charAt(0).toUpperCase() + lvl.slice(1),
+      risk_score:       risk,
+      ai_decision:      data.decision?.action || "Maintain Stock",
+      recommendation:   data.decision?.reason || "Monitor current stock levels.",
+      forecast_graph:   buildForecastGraph(data.predicted_demand, month),
+    };
+  } catch {
+    /* Demo fallback when backend is offline */
+    const demoDemand = 80 + month * 10 + Math.floor(Math.random() * 40);
+    const lvl        = demoDemand > 150 ? "High" : demoDemand > 100 ? "Moderate" : "Low";
+    result = {
+      product_name:     product,
+      month_name:       monthNames[month],
+      forecast_days:    30,
+      prediction_date:  new Date().toLocaleDateString("en-IN"),
+      predicted_demand: demoDemand,
+      confidence_score: (87 + Math.random() * 8).toFixed(1),
+      model_used:       model,
+      stock_level:      stock,
+      risk_level:       lvl,
+      risk_score:       lvl === "High" ? 72 : lvl === "Moderate" ? 44 : 18,
+      ai_decision:      lvl === "High" ? "Increase Inventory" : lvl === "Moderate" ? "Maintain Stock" : "Reduce Inventory",
+      recommendation:   `Predicted demand for ${monthNames[month]} is ${demoDemand} units. Adjust stock accordingly.`,
+      forecast_graph:   buildForecastGraph(demoDemand, month),
+    };
+  }
+
+  localStorage.setItem("predictionResult", JSON.stringify(result));
+  window.location.href = "prediction_results.html";
+}
+
+/* Build a plausible daily trend array */
+function buildForecastGraph(baseDemand, month) {
+  return Array.from({ length: 10 }, (_, i) => ({
+    date:   `Week ${i + 1}`,
+    demand: Math.round(baseDemand * (0.85 + Math.random() * 0.3)),
+  }));
+}
+</script>
+</body>
+</html>
