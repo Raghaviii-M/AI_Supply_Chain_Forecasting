@@ -1,9 +1,4 @@
-/* ============================================================
-   ChainSight AI — shared.js
-   Single source of truth for API URL, layout, auth, and helpers
-   ============================================================ */
-
-const API = "http://127.0.0.1:8000";
+const API = window.location.origin;
 
 /* ── Auth guard ── */
 function requireAuth() {
