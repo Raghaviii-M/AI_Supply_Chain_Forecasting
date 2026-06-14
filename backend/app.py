@@ -57,23 +57,13 @@ if os.path.exists(MODEL_PATH):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "frontend")
 
-app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
 # ── Routes ──────────────────────────────────────────────────────────────────
 @app.get("/")
 def home():
-    return {
-        "project": "AI Supply Chain Forecasting",
-        "endpoints": [
-            "/forecast?month=1",
-            "/top-products",
-            "/api/products",
-            "/api/inventory",
-            "/dashboard-metrics",
-            "/upload",
-        ],
-        "model_loaded": model is not None,
-    }
+    return {"status": "API Running"}
 
 
 @app.get("/dashboard-metrics")
