@@ -53,10 +53,13 @@ if os.path.exists(MODEL_PATH):
         model = None
 
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+
 # ── Routes ──────────────────────────────────────────────────────────────────
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
-
-
 @app.get("/")
 def home():
     return {
